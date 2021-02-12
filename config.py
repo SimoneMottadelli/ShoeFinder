@@ -1,3 +1,7 @@
+"""
+Configuration file
+"""
+
 # INDEXING
 INDEXING_DATA_STRUCTURE_PATH = "./objects/indexing.obj"
 CSV_PATH = "./dataset.csv"

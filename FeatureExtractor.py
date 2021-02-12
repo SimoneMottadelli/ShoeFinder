@@ -13,6 +13,9 @@ from NoMaskException import NoMaskException
 
 
 class FeatureExtractor:
+    """
+    This class allows to extract several features of a given image
+    """
 
     __feature_extractor_model = None
 
@@ -30,6 +33,9 @@ class FeatureExtractor:
 
     @staticmethod
     def init():
+        """
+        Initialize FeatureExtraction initializing Segmenter
+        """
         print("Initializing FeatureExtractor...")
         FeatureExtractor.__feature_extractor_model = FeatureExtractor.__generate_model()
         Segmenter.init()
@@ -37,14 +43,25 @@ class FeatureExtractor:
 
     @staticmethod
     def extract_neural_features(im):
+        """
+        Given an image (as np tensor), extract neural features from the last layer of a pretrained Efficientnetb7
+
+        :param im: a np tensor 1x256x256x3
+        :return: a np tensor of size 2560
+        """
         im_copy = im.copy()
         im_copy = efficientnet_preprocess_input(im_copy)
         result = FeatureExtractor.__feature_extractor_model.predict(im_copy)
         return result[0]
 
     @staticmethod
-    # requires a tensor of size NxMx3
     def rgb2grayscale(im):
+        """
+        Convert an image from RGB to grayscale
+
+        :param im: a np array NxMx3
+        :return: a np array NxM corresponding to the grayscale of the input
+        """
         im_copy = im.copy()
         im_copy = Image.fromarray(im_copy.astype('uint8'))
         im_copy = ImageOps.grayscale(im_copy)
@@ -53,6 +70,14 @@ class FeatureExtractor:
     @staticmethod
     # requires an RGB image and a 3d mask
     def compute_LBP_rgb(im, mask):
+        """
+        Given a segmented image and a segmentation mask compute LBP and return the corresponding normalized histogram
+        with 256 bins
+
+        :param im: an np array NxMx3 of a segmented image
+        :param mask: a np array NxMx3 of the segmentation mask
+        :return: a np array corresponding to the lbp normalized histogram with 256 bins
+        """
         im_copy = im.copy()
         mask_copy = mask.copy()
         im_copy = FeatureExtractor.rgb2grayscale(im_copy)
@@ -68,6 +93,13 @@ class FeatureExtractor:
     @staticmethod
     # requires an image in the RGB space and a 0,1 mask in the double format
     def extract_statistics_ycbcr(im, mask):
+        """
+        Compute mean, std, skew and median of the Cb and Cr channels
+
+        :param im: a np array corresponding to a segmented RGB image
+        :param mask: a np array corresponding to a segmentation mask
+        :return: mean, std, skew and median of the Cb and Cr channels
+        """
         im_copy = im.copy()
         mask_copy = mask.copy()
         im_copy = FeatureExtractor.rgb2ycbcr(im_copy)
@@ -86,6 +118,13 @@ class FeatureExtractor:
 
     @staticmethod
     def extract_statistics_rgb(im, mask):
+        """
+        Compute mean, std, skew and median of the RGB channels
+
+        :param im: a np array corresponding to a segmented RGB image
+        :param mask: a np array corresponding to a segmentation mask
+        :return: mean, std, skew and median of the 3 RGB channels
+        """
         im_copy = im.copy()
         mask_copy = mask.copy()
         r = im_copy[:, :, 0]
@@ -108,6 +147,13 @@ class FeatureExtractor:
 
     @staticmethod
     def extract_sift_kp(im, mask):
+        """
+        Compute SIFT keypoints of a given image and return their SIFT descriptions
+
+        :param im: a np array corresponding to a segmented RGB image
+        :param mask: a np array corresponding to the segmentation mask
+        :return: a np array containing the description of the keypoints found
+        """
         im_copy = im.copy()
         mask_copy = mask.copy()
         mask_copy = mask_copy[:, :, 0].astype(np.uint8)
@@ -118,6 +164,12 @@ class FeatureExtractor:
 
     @staticmethod
     def extract_all_features(im):
+        """
+        Given an image (as np tensor) extract several features
+
+        :param im: a np tensor 1x256x256x3
+        :return: lbp, rgb histogram, ycbcr histogram, ycbcr statistics, rgb statistics, sift descriptors and neural features
+        """
         im_copy = im.copy()
         segmented_im, mask = Segmenter.segment_image(im_copy)
         if np.sum(mask) == 0:
@@ -133,6 +185,12 @@ class FeatureExtractor:
 
     @staticmethod
     def rgb2ycbcr(im):
+        """
+        Convert an RGB image to the YCbCr space
+
+        :param im: an np array of an RGB image
+        :return: an np array corresponding to the YCbCr space of the input image
+        """
         im_copy = im.copy()
         im_copy = Image.fromarray(im_copy.astype('uint8'))
         im_copy = im_copy.convert("YCbCr")
@@ -142,6 +200,13 @@ class FeatureExtractor:
 
     @staticmethod
     def extract_rgb_hist(im, mask):
+        """
+        Compute the normalized RGB histogram of the input image. The 3 histograms are concatenated
+
+        :param im: an np array of a segmented image
+        :param mask: an np array of a segmentation mask
+        :return: a np array corresponding to the RGB histogram of the input image
+        """
         im_copy = im.copy()
         mask_copy = mask.copy()
         mask_copy = mask_copy[:, :, 0].astype(bool)
@@ -158,6 +223,13 @@ class FeatureExtractor:
 
     @staticmethod
     def extract_ycbcr_hist(im, mask):
+        """
+        Compute the normalized YCbCr histogram of the input image. The 2 histograms (Cb and Cr )are concatenated
+
+        :param im: an np array of a segmented image
+        :param mask: an np array of a segmentation mask
+        :return: a np array corresponding to the Cb and Cr histograms of the input image
+        """
         im_copy = im.copy()
         mask_copy = mask.copy()
         im_copy = FeatureExtractor.rgb2ycbcr(im_copy)
@@ -172,6 +244,13 @@ class FeatureExtractor:
 
     @staticmethod
     def extract_bow(model, sift_kp_set):
+        """
+        Use the KMeans model given as input to compute the BOW histogram
+
+        :param model: KMeans model from Indexer to perform BOW with SIFT
+        :param sift_kp_set:
+        :return: an np array of the normalized histogram of words
+        """
         visual_words = model.predict(sift_kp_set)
         visual_words_hist, _ = np.histogram(visual_words, bins=100, range=(0, 99))
         norm_visual_words_hist = visual_words_hist / np.sum(visual_words_hist)

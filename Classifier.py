@@ -18,6 +18,9 @@ class Classifier:
 
     @staticmethod
     def init():
+        """
+        Initialize Classifier building the classification model and loading its corresponding weights
+        """
         print("Initializing Classifier...")
         classifier = Classifier.__generate_model()
         classifier.load_weights(config.CLASSIFIER_WEIGHT_PATH)
@@ -26,6 +29,12 @@ class Classifier:
 
     @staticmethod
     def classify_image(im):
+        """
+        Given an image (as a np tensor), return True if it is a shoe, False otherwise
+
+        :param im: a tensor 1x128x128x3
+        :return: True if im is a shoe, False otherwise
+        """
         im_copy = im.copy()
         pred = Classifier.__classification_model.predict(efficientnetb7_preprocess_input(im_copy))
         return pred[0][0] > config.CLASSIFIER_THRESHOLD

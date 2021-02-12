@@ -11,6 +11,10 @@ import config
 
 
 class QualityChecker:
+    """
+    This class allows to classify an image as "good quality" or "poor quality". It evaluates darkness, blurriness and
+    noise in the image and classify it accordingly
+    """
 
     __classification_model = None
 
@@ -24,6 +28,9 @@ class QualityChecker:
 
     @staticmethod
     def init():
+        """
+        Initialize QualityChecker building the classification model and loading its corresponding weights
+        """
         print("Initializing QualityChecker...")
         classifier = QualityChecker.__generate_model()
         classifier.load_weights(config.QUALITYCHECKER_WEIGHT_PATH)
@@ -32,6 +39,12 @@ class QualityChecker:
 
     @staticmethod
     def good_quality(im):
+        """
+        Given an image (as a np tensor), return True if it is of a good quality, False otherwise
+
+        :param im: a np tensor 1x256x256x3
+        :return: True if the image is of a good quality, False otherwise
+        """
         im_copy = im.copy()
         pred = QualityChecker.__classification_model.predict(efficientnetb7_preprocess_input(im_copy))
         return pred[0][0] > config.QUALITYCHECKER_THRESHOLD
@@ -137,7 +150,4 @@ class QualityChecker:
         QualityChecker.__is_noisy(im)
         QualityChecker.__is_blurry(im)
         QualityChecker.__is_dark(im)
-
-if __name__ == "__main__":
-        QualityChecker.check_quality(load_image("./400139000931_158536.jpg"))
 '''
