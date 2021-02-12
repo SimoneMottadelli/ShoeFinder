@@ -1,0 +1,2 @@
+class NoMaskException(Exception):
+    pass
