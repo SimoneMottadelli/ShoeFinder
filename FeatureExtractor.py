@@ -9,7 +9,7 @@ import cv2
 import config
 import numpy as np
 from Segmenter import Segmenter
-from NoMaskException import NoMaskException
+from FeatureExtractionException import FeatureExtractionException
 
 
 class FeatureExtractor:
@@ -173,7 +173,7 @@ class FeatureExtractor:
         im_copy = im.copy()
         segmented_im, mask = Segmenter.segment_image(im_copy)
         if np.sum(mask) == 0:
-            raise NoMaskException()
+            raise FeatureExtractionException()
         rgb_hist = FeatureExtractor.extract_rgb_hist(segmented_im, mask)
         ycbcr_hist = FeatureExtractor.extract_ycbcr_hist(segmented_im, mask)
         neural = FeatureExtractor.extract_neural_features(im_copy)
@@ -181,7 +181,13 @@ class FeatureExtractor:
         ycbcr_statistics = FeatureExtractor.extract_statistics_ycbcr(segmented_im, mask)
         rgb_statistics = FeatureExtractor.extract_statistics_rgb(segmented_im, mask)
         sift_kp = FeatureExtractor.extract_sift_kp(segmented_im, mask)
+        if sift_kp is None or len(sift_kp.shape) == 0:
+            raise FeatureExtractionException()
         return lbp, rgb_hist, ycbcr_hist, ycbcr_statistics, rgb_statistics, sift_kp, neural
+
+    @staticmethod
+    def ycbcr2rgb(im):
+        return np.array(Image.fromarray(im.copy().astype(np.uint8)).convert("RGB"))
 
     @staticmethod
     def rgb2ycbcr(im):
