@@ -35,7 +35,7 @@ class Bot:
     def sendImage(self, chat_id, image_path, caption):
         #http://docs.python-requests.org/en/latest/user/quickstart/
         if os.path.isfile(image_path):
-            print("sto inviando l'immagine: " + image_path)
+            print("Sending image: " + image_path)
             url = self.base_url + 'sendPhoto'
             files = {'photo': open(image_path, 'rb')}
             data  = {'caption':caption, "chat_id": chat_id}
