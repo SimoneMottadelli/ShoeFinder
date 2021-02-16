@@ -47,7 +47,6 @@ class Matcher:
         Matcher.__data_structure = data_structure_copy
         Matcher.__pca = pca
         Matcher.__scaler = scaler
-        print(data_structure_copy["features"].shape)
         print("Done.")
 
     @staticmethod
