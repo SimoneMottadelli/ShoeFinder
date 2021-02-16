@@ -4,9 +4,9 @@ import math
 import config
 from FeatureExtractor import FeatureExtractor
 import cv2
-from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.layers import Input, Dense, Conv2D, BatchNormalization, MaxPool2D, GlobalAveragePooling2D
 from tensorflow.keras import Model
-from tensorflow.keras.applications.efficientnet import EfficientNetB7, preprocess_input as efficientnetb7_preprocess_input
+from tensorflow.keras.applications.efficientnet import preprocess_input
 import config
 
 
@@ -20,10 +20,22 @@ class QualityChecker:
 
     @staticmethod
     def __generate_model():
-        model = EfficientNetB7(input_tensor=Input(config.QUALITYCHECKER_IMSIZE))
-        model = Model(inputs=model.input, outputs=model.get_layer("top_dropout").output)
-        new_output_layer = Dense(1, activation="sigmoid", name="output")(model.output)
-        model = Model(inputs=model.input, outputs=new_output_layer)
+        input = Input(shape=(256, 256, 3))
+        layer = Conv2D(8, (3, 3), activation="relu")(input)
+        layer = BatchNormalization()(layer)
+        layer = MaxPool2D()(layer)
+        layer = Conv2D(16, (3, 3), activation="relu")(layer)
+        layer = BatchNormalization()(layer)
+        layer = MaxPool2D()(layer)
+        layer = Conv2D(32, (3, 3), activation="relu")(layer)
+        layer = MaxPool2D()(layer)
+        layer = Conv2D(64, (3, 3), activation="relu")(layer)
+        layer = MaxPool2D()(layer)
+        layer = Conv2D(128, (3, 3), activation="relu")(layer)
+        layer = MaxPool2D()(layer)
+        layer = GlobalAveragePooling2D()(layer)
+        output = Dense(1, activation="sigmoid")(layer)
+        model = Model(input, output)
         return model
 
     @staticmethod
@@ -38,7 +50,7 @@ class QualityChecker:
         print("Done.")
 
     @staticmethod
-    def good_quality(im):
+    def is_good_quality(im):
         """
         Given an image (as a np tensor), return True if it is of a good quality, False otherwise
 
@@ -46,7 +58,7 @@ class QualityChecker:
         :return: True if the image is of a good quality, False otherwise
         """
         im_copy = im.copy()
-        pred = QualityChecker.__classification_model.predict(efficientnetb7_preprocess_input(im_copy))
+        pred = QualityChecker.__classification_model.predict(preprocess_input(im_copy))
         return pred[0][0] > config.QUALITYCHECKER_THRESHOLD
 
 '''

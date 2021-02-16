@@ -7,7 +7,7 @@ import config
 import pickle
 import numpy as np
 from FeatureExtractor import FeatureExtractor
-from NoMaskException import NoMaskException
+from FeatureExtractionException import FeatureExtractionException
 
 
 class Indexer:
@@ -78,7 +78,7 @@ class Indexer:
             im = Indexer.load_image(index_folder + file)
             try:
                 lbp, rgb_hist, ycbcr_hist, ycbcr_statistics, rgb_statistics, sift_kp, neural = FeatureExtractor.extract_all_features(im)
-            except NoMaskException:
+            except FeatureExtractionException:
                 continue
             if sift_kp is None or len(sift_kp.shape) == 0:
                 print("Found image without any sift descriptors: ", file)
